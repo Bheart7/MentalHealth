@@ -10,6 +10,12 @@ import plotly.express as px
 
 from Workspace_insight import workspace_insight_plot,workspace_benefits_plot
 
+from dash.dependencies import Input, Output
+
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+
+app.config.suppress_callback_exceptions = True
+
 df=pd.read_csv('./Data/survey.csv')
 dfc=pd.read_csv('./Data/new.csv')
 
@@ -24,6 +30,9 @@ navbar = dbc.NavbarSimple(
                 dbc.DropdownMenuItem("Home",href="/"),
                 dbc.DropdownMenuItem("Understanding Data",href="/understand_data"),
                 dbc.DropdownMenuItem("Exploratory Data Analysis",href="/exploratory_data_analysis"),
+                dbc.DropdownMenuItem("Analyze w.r.t Country",href="/explore_country"),
+                dbc.DropdownMenuItem("Analyze w.r.t Age",href="/explore_age")
+
                 
             ],
         ),
@@ -212,7 +221,7 @@ explore_data= dbc.Container(
 )
 
 
-understand= dbc.Container(
+understand = dbc.Container(
     [   html.Div(style={
         'height':'50px'
     }),
@@ -329,11 +338,88 @@ understand= dbc.Container(
 )
 
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+##################################################################################################################
+
+df1 = dfc[['self_employed','treatment','family_history']]
+
+df2 = dfc[['Country','self_employed','treatment','family_history']]
+
+
+user_layout =html.Div([
+
+        dcc.Dropdown(id='understand',options=[{'label':i.title(), 'value':i} for i in df1],
+        value='self_employed'
+            ),
+
+        dcc.Graph(id='understand-graph')])
+
+@app.callback(Output('understand-graph','figure'),[Input('understand','value')])
+
+def update(xaxis_name):
+    return{
+        
+
+        'data':[go.Bar(
+                        x=pd.crosstab(index=df2['Country'], columns=df2[xaxis_name]).index,
+                        y=pd.crosstab(index=df2['Country'], columns=df2[xaxis_name])['Yes'],
+                        name='Yes',
+                        marker={'color':'#002366'}),
+                go.Bar(
+                        x=pd.crosstab(index=df2['Country'], columns=df2[xaxis_name]).index,
+                        y=pd.crosstab(index=df2['Country'], columns=df2[xaxis_name])['No'],
+                        name='No',
+                        marker={'color':'#89cff0'})],
+        'layout':go.Layout(title=xaxis_name,
+        xaxis={'title':'Country'},
+        yaxis={'title':'Count'})
+    
+
+        }
+#####################################################################################################################
+
+
+
+df3 = dfc[['age_bins','self_employed','treatment','family_history']]
+user_layout_2 =html.Div([
+
+        dcc.Dropdown(id='understand',options=[{'label':i.title(), 'value':i} for i in df1],
+        value='self_employed'
+            ),
+
+        dcc.Graph(id='understand-graph-2')])
+
+
+@app.callback(Output('understand-graph-2','figure'),[Input('understand','value')])
+
+
+
+def update(xaxis_name):
+      return{
+
+      'data':[go.Bar(
+                    x=pd.crosstab(index=df3['age_bins'], columns=df3[xaxis_name]).index,
+                    y=pd.crosstab(index=df3['age_bins'], columns=df3[xaxis_name])['Yes'],
+                    name='Yes',
+                    marker={'color':'#002366'}),
+            go.Bar(
+                    x=pd.crosstab(index=df3['age_bins'], columns=df3[xaxis_name]).index,
+                    y=pd.crosstab(index=df3['age_bins'], columns=df3[xaxis_name])['No'],
+                    name='No',
+                    marker={'color':'#89cff0'})],
+      'layout':go.Layout(title=xaxis_name,
+      xaxis={'title':'Age Groups'},
+      yaxis={'title':'Count'})
+    }
+
+
+
+#####################################################################################################################
 
 homepage = html.Div([navbar, homepage_body,footer])
 explore_data_page = html.Div([navbar, explore_data,footer])
 understand_data_page = html.Div([navbar,understand,footer])
+user_page_layout = html.Div([navbar,user_layout,footer])
+user_page_layout_2 = html.Div([navbar,user_layout_2,footer])
 
 
 app.layout = html.Div([
@@ -351,10 +437,13 @@ def display_page(pathname):
         return understand_data_page
     elif pathname == '/exploratory_data_analysis':
         return explore_data_page
+    elif pathname =='/explore_country':
+        return user_page_layout 
+    elif pathname =='/explore_age':
+        return user_page_layout_2
     else:
         return homepage
     
-
 
 if __name__ == "__main__":
     app.run_server(debug=True)

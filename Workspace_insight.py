@@ -2,6 +2,7 @@ import plotly
 import plotly.graph_objs as go
 import plotly.express as px
 import pandas as pd
+
 dfc=pd.read_csv('./Data/new.csv')
 
 def workspace_insight_plot():
